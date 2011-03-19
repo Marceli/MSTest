@@ -1,30 +1,61 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 
 namespace Marcel.MessageProcessor
 {
 	class Program
 	{
+		static bool finished=false;
+		static MessageProcessor messageProcessor;
 		static void Main(string[] args)
 		{
-			int threadsNumber = 64;
-			int messagesNumber = 256;
-			var messageProcessor = new MessageProcessor(threadsNumber,messagesNumber);
+			int threadsCount;
+			int messagesCount;
+			if(args.Count()!=2 || !int.TryParse(args[0],out threadsCount)|| ! int.TryParse(args[1],out messagesCount))
+			{
+				Console.WriteLine("Please provide number of threads and number of messages");
+				Console.WriteLine("Usage : messageprocessor.exe 64 256");
+				return;
+			}
+			messageProcessor = new MessageProcessor(threadsCount, messagesCount);
+			var backgroundWorker = new BackgroundWorker();
+			backgroundWorker.RunWorkerCompleted+=DisplayResults;
+			backgroundWorker.DoWork+=ProcessMessages;
+			backgroundWorker.RunWorkerAsync();
+			while (!finished)
+			{
+				Console.Write(".");
+				Thread.Sleep(500);
+			}
+			Trace.WriteLine(string.Format("Run time: {0:00}:{1:00}:{2:00}.{3:000}",
+				messageProcessor.ElapsedTime.Hours,
+				messageProcessor.ElapsedTime.Minutes,
+				messageProcessor.ElapsedTime.Seconds,
+				messageProcessor.ElapsedTime.Milliseconds));
+		}
+
+		private static void ProcessMessages(object sender, DoWorkEventArgs e)
+		{
 			messageProcessor.Start();
+		}
+
+		private static void DisplayResults(object sender, RunWorkerCompletedEventArgs e)
+		{
+			finished = true;
 			SetUpListeners();
+			Trace.WriteLine(string.Format("{0:0.000}",messageProcessor.AverageDispatches));
 			foreach (var histogramItem in messageProcessor.Histogram)
 			{
 				Trace.WriteLine(histogramItem.ToString());
 			}
-			Trace.WriteLine(string.Format("{0:0.000}",messageProcessor.AverageDispatches));
-			Trace.WriteLine(string.Format("{0:00}:{1:00}:{2:00}.{3:000}",messageProcessor.ElapsedTime.Hours,messageProcessor.ElapsedTime.Minutes,messageProcessor.ElapsedTime.Seconds,messageProcessor.ElapsedTime.Milliseconds));
-			Console.ReadKey();
-
+			
 		}
 
 		private static void SetUpListeners()
