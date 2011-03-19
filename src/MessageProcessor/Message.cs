@@ -1,7 +1,7 @@
 ﻿
 using System;
 
-namespace MessageProcessor
+namespace Marcel.MessageProcessor
 {
 	public class Message
 	{

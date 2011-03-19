@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace MessageProcessor
+namespace Marcel.MessageProcessor
 {
 	public class MessageBuilder
 	{
@@ -16,7 +16,7 @@ namespace MessageProcessor
 		public IEnumerable<Message> GetMessages()
 		{
 			var result = new List<Message>();
-			for (var i = 0; i < threadsNumber; i++)
+			for (var i = 0; i < messagesNumber; i++)
 			{
 				result.Add(new Message(ThreadSafeRandom.Next(0, threadsNumber)));
 			}

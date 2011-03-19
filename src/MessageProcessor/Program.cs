@@ -6,14 +6,14 @@ using System.Linq;
 using System.Text;
 
 
-namespace MessageProcessor
+namespace Marcel.MessageProcessor
 {
 	class Program
 	{
 		static void Main(string[] args)
 		{
 			int threadsNumber = 64;
-			int messagesNumber = 100;
+			int messagesNumber = 256;
 			var messageProcessor = new MessageProcessor(threadsNumber,messagesNumber);
 			messageProcessor.Start();
 			SetUpListeners();

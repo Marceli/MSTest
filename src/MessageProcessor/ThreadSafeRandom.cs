@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MessageProcessor
+namespace Marcel.MessageProcessor
 {
+/// <summary>
+/// Random class is not thread safe (it starts returns 0 after a while) this class ThreadSafeRandom will address this issue.
+/// </summary>
 	public class ThreadSafeRandom
 	{
 		private static Random random=new Random(Environment.TickCount);
