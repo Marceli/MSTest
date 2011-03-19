@@ -14,7 +14,9 @@ namespace MessageProcessor
 		private readonly int messagesNumber;
 		private readonly ThreadSafeRandom random = new ThreadSafeRandom();
 		private readonly int threadsNumber;
-		private readonly IProducerConsumerCollection<Message>[] toDispatch;
+	//	private readonly IProducerConsumerCollection<Message>[] toDispatch;
+		private readonly ConcurrentDictionary<int,IProducerConsumerCollection<Message>> toDispatch;
+		
 		private Stopwatch stopWatch;
 
 		public MessageProcessor(int threadsNumber, int messagesNumber)
@@ -22,7 +24,8 @@ namespace MessageProcessor
 			this.threadsNumber = threadsNumber;
 			this.messagesNumber = messagesNumber;
 			ValidateParameters(threadsNumber, messagesNumber);
-			toDispatch = new IProducerConsumerCollection<Message>[threadsNumber];
+			//toDispatch = new IProducerConsumerCollection<Message>[threadsNumber];
+			toDispatch = new ConcurrentDictionary<int,IProducerConsumerCollection<Message>>();
 			countdown = new CountdownEvent(threadsNumber*messagesNumber);
 			this.threadsNumber = threadsNumber;
 			for (int i = 0; i < threadsNumber; i++)
@@ -117,13 +120,13 @@ namespace MessageProcessor
 					{
 						throw new Exception("Should never happen for ConCurrentBag");
 					}
-					Console.WriteLine("Found "+threadId);
+					Console.WriteLine("Found {0} CountDown:{1}",threadId,countdown.CurrentCount);
 					countdown.Signal();
 				}
 				else
 				{
 					int randomThread = ThreadSafeRandom.Next(0, threadsNumber);
-					Console.WriteLine("Random Generated: "+randomThread);
+			//		Console.WriteLine("Random Generated: "+randomThread);
 					if (!toDispatch[randomThread].TryAdd(message))
 					{
 						throw new Exception("Should never happen for ConCurrentBag");
@@ -132,4 +135,5 @@ namespace MessageProcessor
 			}
 		}
 	}
+
 }
