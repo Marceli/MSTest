@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageProcessor", "src\MessageProcessor\MessageProcessor.csproj", "{31722516-13D3-49BC-B077-5CD69B875289}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageProcessorTest", "src\MessageProcessorTest\MessageProcessorTest\MessageProcessorTest.csproj", "{E2F23421-23F2-4C4F-8E06-FB3E032B2AA9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageProcessorTest", "src\MessageProcessorTest\MessageProcessorTest.csproj", "{E2F23421-23F2-4C4F-8E06-FB3E032B2AA9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
