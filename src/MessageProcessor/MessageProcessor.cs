@@ -37,7 +37,7 @@ namespace MessageProcessor
 			{
 				countdown.Wait();
 				return from m in dispatched
-				       group m by m.Dispatched
+				       group m by m.Despathes
 				       into grouped orderby grouped.Key
 				       select new HistogramItem {Dispatches = grouped.Key, DispatchesCount = grouped.Count()};
 			}
@@ -48,7 +48,7 @@ namespace MessageProcessor
 			get
 			{
 				countdown.Wait();
-				return (from m in dispatched select m.Dispatched).Sum();
+				return (from m in dispatched select m.Despathes).Sum();
 			}
 		}
 
@@ -57,7 +57,7 @@ namespace MessageProcessor
 			get
 			{
 				countdown.Wait();
-				return (from m in dispatched select m.Dispatched).Average();
+				return (from m in dispatched select m.Despathes).Average();
 			}
 		}
 
