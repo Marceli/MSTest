@@ -12,7 +12,7 @@ namespace MessageProcessor
 		static void Main(string[] args)
 		{
 			int threadsNumber = 64;
-			int messagesNumber = 100;
+			int messagesNumber = 10;
 			var messageProcessor = new MessageProcessor(threadsNumber,messagesNumber);
 			messageProcessor.Start();
 			SetUpListeners();
@@ -23,6 +23,7 @@ namespace MessageProcessor
 			Trace.WriteLine(string.Format("{0:0.000}",messageProcessor.AverageDispatches));
 			Trace.WriteLine(string.Format("{0:00}:{1:00}:{2:00}.{3:000}",messageProcessor.ElapsedTime.Hours,messageProcessor.ElapsedTime.Minutes,messageProcessor.ElapsedTime.Seconds,messageProcessor.ElapsedTime.Milliseconds));
 			Console.ReadKey();
+
 		}
 
 		private static void SetUpListeners()
