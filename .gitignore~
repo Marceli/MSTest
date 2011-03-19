@@ -1,0 +1,10 @@
+*.ctl
+*.vsp
+_ReSharper.*
+*.user
+*.swp
+*.suo
+././bin
+././obj
+
+
