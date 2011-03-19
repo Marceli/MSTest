@@ -1,5 +1,0 @@
-E:\Dev\MS\src\MessageProcessorTest\MessageProcessorTest\bin\Debug\MessageProcessorTest.dll
-E:\Dev\MS\src\MessageProcessorTest\MessageProcessorTest\bin\Debug\MessageProcessorTest.pdb
-E:\Dev\MS\src\MessageProcessorTest\MessageProcessorTest\obj\Debug\ResolveAssemblyReference.cache
-E:\Dev\MS\src\MessageProcessorTest\MessageProcessorTest\obj\Debug\MessageProcessorTest.dll
-E:\Dev\MS\src\MessageProcessorTest\MessageProcessorTest\obj\Debug\MessageProcessorTest.pdb

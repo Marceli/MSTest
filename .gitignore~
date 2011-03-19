@@ -4,7 +4,7 @@ _ReSharper.*
 *.user
 *.swp
 *.suo
-././bin
-././obj
+*/*/bin
+*/*/obj
 
 

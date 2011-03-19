@@ -117,11 +117,13 @@ namespace MessageProcessor
 					{
 						throw new Exception("Should never happen for ConCurrentBag");
 					}
+					Console.WriteLine("Found "+threadId);
 					countdown.Signal();
 				}
 				else
 				{
 					int randomThread = ThreadSafeRandom.Next(0, threadsNumber);
+					Console.WriteLine("Random Generated: "+randomThread);
 					if (!toDispatch[randomThread].TryAdd(message))
 					{
 						throw new Exception("Should never happen for ConCurrentBag");

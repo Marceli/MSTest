@@ -12,7 +12,7 @@ namespace MessageProcessor
 		static void Main(string[] args)
 		{
 			int threadsNumber = 64;
-			int messagesNumber = 10;
+			int messagesNumber = 100;
 			var messageProcessor = new MessageProcessor(threadsNumber,messagesNumber);
 			messageProcessor.Start();
 			SetUpListeners();
