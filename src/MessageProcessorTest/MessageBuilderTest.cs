@@ -10,18 +10,18 @@ namespace MessageProcessorTest
 		[Test]
 		public void CanCreateMessageBuilder()
 		{
-			Assert.IsNotNull(new MessageBuilder(1, 1));
+			Assert.IsNotNull(new MessageBuilder(1, 1,1));
 		}
 		[Test]
 		public void GetMessages_WithOne_ReturnsOneMessage()
 		{
-			var messageBuilder = new MessageBuilder(1,1);
+			var messageBuilder = new MessageBuilder(1,1,1);
 			Assert.AreEqual(1,messageBuilder.GetMessages().Count());
 		}
 		[Test]
 		public void GetMessages_WithTen_ReturnsTenMessages()
 		{
-			var messageBuilder = new MessageBuilder(1, 10);
+			var messageBuilder = new MessageBuilder(1, 10,1);
 			Assert.AreEqual(10,messageBuilder.GetMessages().Count());
 		}
 	}

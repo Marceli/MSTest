@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Marcel.MessageProcessor
 {
@@ -6,11 +7,15 @@ namespace Marcel.MessageProcessor
 	{
 		private readonly int threadsNumber;
 		private readonly int messagesNumber;
+		private readonly Random random;
 
-		public MessageBuilder(int threadsNumber, int messagesNumber)
+
+		public MessageBuilder(int threadsNumber, int messagesNumber,int seed)
 		{
+			random=new Random(Environment.TickCount+seed);
 			this.threadsNumber = threadsNumber;
 			this.messagesNumber = messagesNumber;
+
 		}
 
 		public IEnumerable<Message> GetMessages()
@@ -18,7 +23,7 @@ namespace Marcel.MessageProcessor
 			var result = new List<Message>();
 			for (var i = 0; i < messagesNumber; i++)
 			{
-				result.Add(new Message(ThreadSafeRandom.Next(0, threadsNumber)));
+				result.Add(new Message(random.Next(0, threadsNumber)));
 			}
 			return result;
 		}

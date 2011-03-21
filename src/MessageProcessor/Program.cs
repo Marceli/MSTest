@@ -14,16 +14,21 @@ namespace Marcel.MessageProcessor
 	{
 		static bool finished=false;
 		static MessageProcessor messageProcessor;
+		static TextWriterTraceListener textWriterTraceListener;
 		static void Main(string[] args)
 		{
 			int threadsCount;
 			int messagesCount;
-			if(args.Count()!=2 || !int.TryParse(args[0],out threadsCount)|| ! int.TryParse(args[1],out messagesCount))
-			{
-				Console.WriteLine("Please provide number of threads and number of messages");
-				Console.WriteLine("Usage : messageprocessor.exe 64 256");
-				return;
-			}
+//			if(args.Count()!=2 || !int.TryParse(args[0],out threadsCount)|| ! int.TryParse(args[1],out messagesCount))
+//			{
+//				Console.WriteLine("Please provide number of threads and number of messages");
+//				Console.WriteLine("Usage : messageprocessor.exe 64 256");
+//				return;
+//			}
+			Console.WriteLine(
+				"It's O(T^2*M) (where T number of threads, M number of messages) algoritm so it can take some time to compute results for big T");
+			threadsCount = 64;
+			messagesCount = 256;
 			messageProcessor = new MessageProcessor(threadsCount, messagesCount);
 			var backgroundWorker = new BackgroundWorker();
 			backgroundWorker.RunWorkerCompleted+=DisplayResults;
@@ -39,6 +44,8 @@ namespace Marcel.MessageProcessor
 				messageProcessor.ElapsedTime.Minutes,
 				messageProcessor.ElapsedTime.Seconds,
 				messageProcessor.ElapsedTime.Milliseconds));
+			textWriterTraceListener.Close();
+			//Console.ReadLine();
 		}
 
 		private static void ProcessMessages(object sender, DoWorkEventArgs e)
@@ -55,21 +62,21 @@ namespace Marcel.MessageProcessor
 			{
 				Trace.WriteLine(histogramItem.ToString());
 			}
-			
 		}
 
 		private static void SetUpListeners()
 		{
 			Trace.Listeners.Clear();
-			var fileName = "log.txt";
+			const string fileName = "log.txt";
 			if(File.Exists(fileName))
 				File.Delete(fileName);
 
-			var twtl = new TextWriterTraceListener(fileName);
+			textWriterTraceListener = new TextWriterTraceListener(fileName);
 			var ctl = new ConsoleTraceListener(false);
-			Trace.Listeners.Add(twtl);
+			Trace.Listeners.Add(textWriterTraceListener);
 			Trace.Listeners.Add(ctl);
 			Trace.AutoFlush = true;
+			
 		}
 	}
 }
