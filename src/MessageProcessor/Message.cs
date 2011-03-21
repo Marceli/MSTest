@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Threading;
 
 namespace Marcel.MessageProcessor
 {
@@ -19,10 +20,7 @@ namespace Marcel.MessageProcessor
 		{
 			get
 			{
-                lock(locker)
-                {
-            		return despathes;
-                }
+        		return despathes;
 			}
 		}
 
@@ -36,10 +34,7 @@ namespace Marcel.MessageProcessor
 
 		public void IncreaseDispatched()
 		{
-			lock (locker)
-			{
-				despathes++;
-			}
+			Interlocked.Increment(ref this.despathes);
 		}
 	}
 }

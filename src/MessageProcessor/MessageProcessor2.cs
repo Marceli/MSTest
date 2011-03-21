@@ -5,10 +5,11 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using MessageProcessor;
 
 namespace Marcel.MessageProcessor
 {
-	public class MessageProcessor
+	public class MessageProcessor2
 	{
 		private readonly CountdownEvent countdown;
 		private readonly IProducerConsumerCollection<Message> dispatched = new ConcurrentBag<Message>();
@@ -17,7 +18,7 @@ namespace Marcel.MessageProcessor
 		private readonly IProducerConsumerCollection<Message>[] toDispatch;
 		private Stopwatch stopWatch;
 
-		public MessageProcessor(int threadsCount, int messagesCount)
+		public MessageProcessor2(int threadsCount, int messagesCount)
 		{
 			ValidateParameters(threadsCount, messagesCount);
 			this.threadsCount = threadsCount;
@@ -28,7 +29,7 @@ namespace Marcel.MessageProcessor
 			for (var i = 0; i < threadsCount; i++)
 			{
 				//No requirement to process messages in specific order hence ConcurrentBag should be fastest option
-				toDispatch[i] = new ConcurrentBag<Message>();
+				toDispatch[i] = new MyProducerQueue<Message>();
 			}
 		}
 
@@ -37,7 +38,7 @@ namespace Marcel.MessageProcessor
 			get { return toDispatch; }
 		}
 
-		public TimeSpan ElapsedTime
+		public TimeSpan Elapsed
 		{
 			get
 			{
@@ -97,10 +98,11 @@ namespace Marcel.MessageProcessor
 
 		private void ReleaseAllThreads()
 		{
+		
 			for (var i = 0; i < threadsCount; i++)
 			{
-				lock (toDispatch[i])
-					Monitor.Pulse(toDispatch[i]);
+				((MyProducerQueue<Message>)toDispatch[i]).Abort();
+			
 			}
 		}
 
@@ -116,19 +118,15 @@ namespace Marcel.MessageProcessor
 			while (countdown.CurrentCount > 0)
 			{
 				Message message;
-            	if (!toDispatch[threadId].TryTake(out message))
-            	{
-            		//Looks like we processed all messages in our bag let give some time to other threads to fill it
-    				lock (toDispatch[threadId])
-						Monitor.Wait(toDispatch[threadId]);
-            		continue;
-            	}
+				if(!toDispatch[threadId].TryTake(out message))
+					continue;
+
                 message.IncreaseDispatched();
 				if (message.DestinationThreadId == threadId)
 				{
 					//It's right message lets add it to result's collection for further analisis
 					AddToResultsCollection(message);
-					//Console.WriteLine("Found"+threadId+" CountDown"+countdown.CurrentCount);
+//					Console.WriteLine("Found"+threadId+" CountDown"+countdown.CurrentCount);
 				}
 				else
 				{
@@ -149,8 +147,6 @@ namespace Marcel.MessageProcessor
 		{
 			var randomThread = random.Next(0, threadsCount);
             toDispatch[randomThread].TryAdd(message);
-			lock (toDispatch[randomThread])
-				Monitor.Pulse(toDispatch[randomThread]);
 		}
 
 		private void ValidateParameters(int threadsNumber, int messagesNumber)

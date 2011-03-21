@@ -13,7 +13,7 @@ namespace Marcel.MessageProcessor
 	class Program
 	{
 		static bool finished=false;
-		static MessageProcessor messageProcessor;
+		static MessageProcessor2 messageProcessor;
 		static TextWriterTraceListener textWriterTraceListener;
 		static void Main(string[] args)
 		{
@@ -29,7 +29,8 @@ namespace Marcel.MessageProcessor
 				"It's O(T^2*M) (where T number of threads, M number of messages) algoritm so it can take some time to compute results for big T");
 			threadsCount = 64;
 			messagesCount = 256;
-			messageProcessor = new MessageProcessor(threadsCount, messagesCount);
+
+			messageProcessor = new MessageProcessor2(threadsCount, messagesCount);
 			var backgroundWorker = new BackgroundWorker();
 			backgroundWorker.RunWorkerCompleted+=DisplayResults;
 			backgroundWorker.DoWork+=ProcessMessages;
@@ -39,13 +40,14 @@ namespace Marcel.MessageProcessor
 				Console.Write(".");
 				Thread.Sleep(500);
 			}
+			SetUpListeners();
 			Trace.WriteLine(string.Format("Run time: {0:00}:{1:00}:{2:00}.{3:000}",
-				messageProcessor.ElapsedTime.Hours,
-				messageProcessor.ElapsedTime.Minutes,
-				messageProcessor.ElapsedTime.Seconds,
-				messageProcessor.ElapsedTime.Milliseconds));
+				messageProcessor.Elapsed.Hours,
+				messageProcessor.Elapsed.Minutes,
+				messageProcessor.Elapsed.Seconds,
+				messageProcessor.Elapsed.Milliseconds));
 			textWriterTraceListener.Close();
-			//Console.ReadLine();
+			Console.ReadLine();
 		}
 
 		private static void ProcessMessages(object sender, DoWorkEventArgs e)
@@ -56,12 +58,7 @@ namespace Marcel.MessageProcessor
 		private static void DisplayResults(object sender, RunWorkerCompletedEventArgs e)
 		{
 			finished = true;
-			SetUpListeners();
-			Trace.WriteLine(string.Format("{0:0.000}",messageProcessor.AverageDispatches));
-			foreach (var histogramItem in messageProcessor.Histogram)
-			{
-				Trace.WriteLine(histogramItem.ToString());
-			}
+
 		}
 
 		private static void SetUpListeners()
