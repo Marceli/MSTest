@@ -47,16 +47,17 @@ namespace Marcel.MessageProcessor
 			}
 		}
 
-		public IEnumerable<HistogramItem> Histogram
+        public IEnumerable<string> Histogram
 		{
 			get
 			{
-				countdown.Wait();
-				return from m in dispatched
-				       group m by m.Despathes
-				       into grouped orderby grouped.Key
-				       select new HistogramItem(grouped.Key, grouped.Count());
-			}
+                countdown.Wait();
+                return from m in dispatched
+                       group m by m.Despathes
+                           into grouped
+                           orderby grouped.Key
+                           select string.Format("{0}    {1}", grouped.Key, grouped.Count());
+            }
 		}
 
 		public double AllDispatches

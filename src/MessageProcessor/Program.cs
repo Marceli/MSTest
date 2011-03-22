@@ -13,7 +13,7 @@ namespace Marcel.MessageProcessor
 	class Program
 	{
 		static bool finished=false;
-		static MessageProcessor2 messageProcessor;
+		static MessageProcessor3 messageProcessor;
 		static TextWriterTraceListener textWriterTraceListener;
 		static void Main(string[] args)
 		{
@@ -27,10 +27,10 @@ namespace Marcel.MessageProcessor
 //			}
 			Console.WriteLine(
 				"It's O(T^2*M) (where T number of threads, M number of messages) algoritm so it can take some time to compute results for big T");
-			threadsCount = 64;
+			threadsCount = 10;
 			messagesCount = 256;
 
-			messageProcessor = new MessageProcessor2(threadsCount, messagesCount);
+			messageProcessor = new MessageProcessor3(threadsCount, messagesCount);
 			var backgroundWorker = new BackgroundWorker();
 			backgroundWorker.RunWorkerCompleted+=DisplayResults;
 			backgroundWorker.DoWork+=ProcessMessages;
@@ -40,13 +40,6 @@ namespace Marcel.MessageProcessor
 				Console.Write(".");
 				Thread.Sleep(500);
 			}
-			SetUpListeners();
-			Trace.WriteLine(string.Format("Run time: {0:00}:{1:00}:{2:00}.{3:000}",
-				messageProcessor.Elapsed.Hours,
-				messageProcessor.Elapsed.Minutes,
-				messageProcessor.Elapsed.Seconds,
-				messageProcessor.Elapsed.Milliseconds));
-			textWriterTraceListener.Close();
 			Console.ReadLine();
 		}
 
@@ -58,8 +51,22 @@ namespace Marcel.MessageProcessor
 		private static void DisplayResults(object sender, RunWorkerCompletedEventArgs e)
 		{
 			finished = true;
+            SetUpListeners();
+            Trace.WriteLine(messageProcessor.AverageDispatches);
+            messageProcessor.Histogram.ToList<string>().ForEach(PrintHistogram);
+            Trace.WriteLine(string.Format("Run time: {0:00}:{1:00}:{2:00}.{3:000}",
+                messageProcessor.Elapsed.Hours,
+                messageProcessor.Elapsed.Minutes,
+                messageProcessor.Elapsed.Seconds,
+                messageProcessor.Elapsed.Milliseconds));
+            textWriterTraceListener.Close();
 
 		}
+        private static void PrintHistogram(string line)
+        {
+            Trace.WriteLine(line);
+        }
+
 
 		private static void SetUpListeners()
 		{
