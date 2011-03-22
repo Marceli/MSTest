@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MessageProcessor;
 
 namespace Marcel.MessageProcessor
 {
@@ -13,7 +12,7 @@ namespace Marcel.MessageProcessor
 	{
       
 		private readonly CountdownEvent countdown;
-		private readonly IProducerConsumerCollection<Message> dispatched = new ConcurrentBag<Message>();
+		private readonly ConcurrentBag<Message> results = new ConcurrentBag<Message>();
 		private readonly int messagesCount;
 		private readonly int threadsCount;
         private readonly BlockingCollection<Message>[] toDispatch;
@@ -53,7 +52,7 @@ namespace Marcel.MessageProcessor
 			get
 			{
                 countdown.Wait();
-                return from m in dispatched
+                return from m in results
                        group m by m.Despathes
                            into grouped
                            orderby grouped.Key
@@ -66,7 +65,7 @@ namespace Marcel.MessageProcessor
 			get
 			{
 				countdown.Wait();
-				return (from m in dispatched select m.Despathes).Sum();
+				return (from m in results select m.Despathes).Sum();
 			}
 		}
 
@@ -75,7 +74,7 @@ namespace Marcel.MessageProcessor
 			get
 			{
 				countdown.Wait();
-				return (from m in dispatched select m.Despathes).Average();
+				return (from m in results select m.Despathes).Average();
 			}
 		}
 
@@ -88,22 +87,9 @@ namespace Marcel.MessageProcessor
 			{
 				// create local variable to do not access modified closure
 				var temp = i;
-                threadParams.Add(new ThreadParam(i, threadsCount, messagesCount));
-                //ThreadPool.QueueUserWorkItem(new WaitCallback(Dispatch),param);
-               
-//				var worker = new Thread(() => Dispatch(new MessageBuilder(threadsCount, messagesCount,temp).GetMessages(), temp))
-//				             	{Name = "MyWorker_" + temp};
-//				worker.Start();
-                // I tried to use TaskClass but apparently it was much slower than Thread
-              //  Task.Factory.StartNew(()=>Dispatch(param));
+                var param=new ThreadParam(i, threadsCount, messagesCount);
+                Task.Factory.StartNew(()=>Dispatch(param),TaskCreationOptions.LongRunning);
 			}
-//            var parallelQuery = from threadParam in threadParams.AsParallel()                               
- //                               select Dispatch(threadParam);
-            //threadParams.AsParallel<ThreadParam>();
-            //Parallel.ForEach(threadParams, (param) => Dispatch(param));
-
-            var query = from n in threadParams.AsParallel() select Dispatch(n);
-            var results = query.ToArray();
 			countdown.Wait();
 			ReleaseAllThreads();
 			stopWatch.Stop();
@@ -111,20 +97,15 @@ namespace Marcel.MessageProcessor
 
 		private void ReleaseAllThreads()
 		{
-		
-			for (var i = 0; i < threadsCount; i++)
-			{
-                toDispatch[i].CompleteAdding();
-			}
+    		toDispatch.ToList().ForEach(bc=>bc.CompleteAdding());
 		}
 
-		private IList<Message> Dispatch(object threadParam)
+		private void Dispatch(object threadParam)
 		{
 			//There is option to use ThreadSafeRandom class but creating separate instance for each thread seams to be 
 			//cleaner solution.
-            var result = new List<Message>();
-            int threadId = ((ThreadParam)threadParam).ThreadId;
-            IEnumerable<Message> messages = ((ThreadParam)threadParam).Messages;
+            var threadId = ((ThreadParam)threadParam).ThreadId;
+            var messages = ((ThreadParam)threadParam).Messages;
 			var random=new Random(threadId);
 			foreach (var message in messages)
 			{
@@ -139,10 +120,9 @@ namespace Marcel.MessageProcessor
                     if (message.DestinationThreadId == threadId)
                     {
                         //It's right message lets add it to result's collection for further analisis
-                        result.Add(message);
+                        results.Add(message);
                         //decrease global counter
                         countdown.Signal();
-                        Console.WriteLine("Found:" + threadId + " CountDown:" + countdown.CurrentCount);
 
                     }
                     else
@@ -154,13 +134,8 @@ namespace Marcel.MessageProcessor
                     }                                      
                 }
 			}
-            return result;
 		}
         
-
-		
-		
-
 		private void ValidateParameters(int threadsNumber, int messagesNumber)
 		{
 			if (threadsNumber < 1 || threadsNumber > 1000)

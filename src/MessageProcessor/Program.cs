@@ -13,7 +13,7 @@ namespace Marcel.MessageProcessor
 	class Program
 	{
 		static bool finished=false;
-		static MessageProcessor3 messageProcessor;
+		static MessageProcessor2 messageProcessor;
 		static TextWriterTraceListener textWriterTraceListener;
 		static void Main(string[] args)
 		{
@@ -27,10 +27,12 @@ namespace Marcel.MessageProcessor
 //			}
 			Console.WriteLine(
 				"It's O(T^2*M) (where T number of threads, M number of messages) algoritm so it can take some time to compute results for big T");
-			threadsCount = 10;
+			threadsCount = 64;
 			messagesCount = 256;
 
-			messageProcessor = new MessageProcessor3(threadsCount, messagesCount);
+			messageProcessor = new MessageProcessor2(threadsCount, messagesCount);
+			//messageProcessor.Start();
+			//return;
 			var backgroundWorker = new BackgroundWorker();
 			backgroundWorker.RunWorkerCompleted+=DisplayResults;
 			backgroundWorker.DoWork+=ProcessMessages;
