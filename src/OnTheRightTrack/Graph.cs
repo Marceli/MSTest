@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace BreadthDepthFirstSearch
+namespace OnTheRightTrack
 {
 	public class Graph
 	{

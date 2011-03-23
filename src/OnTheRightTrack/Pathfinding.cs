@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
-namespace BreadthDepthFirstSearch
+namespace OnTheRightTrack
 {
 	class Pathfinding
 	{
@@ -25,10 +25,10 @@ namespace BreadthDepthFirstSearch
 
 			while(queue.Count != 0)
 			{
-				var u = queue.Dequeue();
+				var current = queue.Dequeue();
 
 				// Check if node is the end
-				if(u == end)
+				if(current == end)
 				{
 					Console.Write("Path found.");
 
@@ -36,10 +36,10 @@ namespace BreadthDepthFirstSearch
 				}
 				else
 				{
-					u.Data = "Visited";
+					current.Data = "Visited";
 
 					// Expands u's neighbors in the queue
-					foreach(var edge in u.Connections)
+					foreach(var edge in current.Connections)
 					{
 						if(edge.Neighbor.Data == null)
 						{
@@ -47,13 +47,13 @@ namespace BreadthDepthFirstSearch
 
 							if(edge.Neighbor != end)
 							{
-								edge.Neighbor.PathParent = u;
+								edge.Neighbor.PathParent = current;
 
 								PrintPath(edge.Neighbor);
 							}
 							else
 							{
-								edge.Neighbor.PathParent = u;
+								edge.Neighbor.PathParent = current;
 
 								PrintPath(edge.Neighbor);
 
@@ -62,11 +62,11 @@ namespace BreadthDepthFirstSearch
 
 							Console.WriteLine();
 						}
-						/* shows the repeated nodes
-            else
-            {
-              Console.Write(edge.Neighbor.Key);
-            } */
+						
+                        else
+                        {
+                          Console.Write(edge.Neighbor.Key);
+                        } 
 
 						queue.Enqueue(edge.Neighbor);
 					}

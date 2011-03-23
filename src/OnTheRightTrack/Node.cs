@@ -1,11 +1,14 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 
-namespace BreadthDepthFirstSearch
+namespace OnTheRightTrack
 {
+    [DebuggerDisplay("Node Key:{key} Data:{data}")]
 	public class Node
 	{
-		// Fields
+		
 		private readonly IList<Track> connections;
+       
 		private readonly string key;
 		private object data;
 
@@ -20,15 +23,15 @@ namespace BreadthDepthFirstSearch
 			this.data = data;
 			if (connections == null)
 			{
-				connections = new List<Track>();
+				this.connections = new List<Track>();
 			}
 			else
 			{
-				connections = connections;
+				this.connections = connections;
 			}
 		}
 
-		// Properties
+		
 		public virtual object Data
 		{
 			get { return data; }
@@ -39,7 +42,7 @@ namespace BreadthDepthFirstSearch
 		{
 			get { return key; }
 		}
-
+        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public virtual IList<Track> Connections
 		{
 			get { return connections; }

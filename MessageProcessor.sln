@@ -1,7 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+# Visual Web Developer Express 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageProcessor", "src\MessageProcessor\MessageProcessor.csproj", "{31722516-13D3-49BC-B077-5CD69B875289}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BreadthDepthFirstSearch", "src\OnTheRightTrack\BreadthDepthFirstSearch.csproj", "{BB81DB6C-1C55-435A-98C6-F9E74AF04D6F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,6 +25,16 @@ Global
 		{31722516-13D3-49BC-B077-5CD69B875289}.Release|Mixed Platforms.Build.0 = Release|x86
 		{31722516-13D3-49BC-B077-5CD69B875289}.Release|x86.ActiveCfg = Release|x86
 		{31722516-13D3-49BC-B077-5CD69B875289}.Release|x86.Build.0 = Release|x86
+		{BB81DB6C-1C55-435A-98C6-F9E74AF04D6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB81DB6C-1C55-435A-98C6-F9E74AF04D6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB81DB6C-1C55-435A-98C6-F9E74AF04D6F}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{BB81DB6C-1C55-435A-98C6-F9E74AF04D6F}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{BB81DB6C-1C55-435A-98C6-F9E74AF04D6F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BB81DB6C-1C55-435A-98C6-F9E74AF04D6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB81DB6C-1C55-435A-98C6-F9E74AF04D6F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB81DB6C-1C55-435A-98C6-F9E74AF04D6F}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{BB81DB6C-1C55-435A-98C6-F9E74AF04D6F}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{BB81DB6C-1C55-435A-98C6-F9E74AF04D6F}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

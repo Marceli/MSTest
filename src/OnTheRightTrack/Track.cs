@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 
-namespace BreadthDepthFirstSearch
+namespace OnTheRightTrack
 {
+    [DebuggerDisplay("Track Lenght:{cost} to:{Neighbor.Key}")]
 	public class Track
 	{
 		// Fields
