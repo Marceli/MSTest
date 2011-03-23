@@ -11,11 +11,11 @@ namespace Marcel.MessageProcessor
 {
 	public class MessageProcessor2
 	{
-		private readonly CountdownEvent countdown;
-		private readonly IProducerConsumerCollection<Message> dispatched = new ConcurrentBag<Message>();
+		private CountdownEvent countdown;
+        private readonly ConcurrentBag<Message> results = new ConcurrentBag<Message>();
 		private readonly int messagesCount;
 		private readonly int threadsCount;
-		private readonly IProducerConsumerCollection<Message>[] toDispatch;
+        private readonly BlockingQueue<Message>[] toDispatch;
 		private Stopwatch stopWatch;
 
 		public MessageProcessor2(int threadsCount, int messagesCount)
@@ -23,36 +23,73 @@ namespace Marcel.MessageProcessor
 			ValidateParameters(threadsCount, messagesCount);
 			this.threadsCount = threadsCount;
 			this.messagesCount = messagesCount;
-			toDispatch = new IProducerConsumerCollection<Message>[threadsCount];
-			countdown = new CountdownEvent(threadsCount*messagesCount);
+            toDispatch = new BlockingQueue<Message>[threadsCount];
+			
 			this.threadsCount = threadsCount;
 			for (var i = 0; i < threadsCount; i++)
-			{
-				//No requirement to process messages in specific order hence ConcurrentBag should be fastest option
-				toDispatch[i] = new MyProducerQueue<Message>();
+			{				
+				toDispatch[i] = new BlockingQueue<Message>();
 			}
 		}
 
-		public IProducerConsumerCollection<Message>[] ToDispatch
-		{
-			get { return toDispatch; }
-		}
+        public void Start()
+        {
+            countdown = new CountdownEvent(threadsCount * messagesCount);
+            stopWatch = Stopwatch.StartNew();
+            for (var i = 0; i < threadsCount; i++)
+            {
+                // create local variable to do not access modified closure
+                var temp = i;
+                Task.Factory.StartNew(() => Dispatch(new MessageBuilder(threadsCount, messagesCount, temp).GetMessages(), temp), TaskCreationOptions.LongRunning);
+            }
+            countdown.Wait();
+            for (var i = 0; i < threadsCount; i++)
+            {
+                toDispatch[i].CompleteAdding();
+            }
+            Elapsed=stopWatch.Elapsed;        
+        }
+        public BlockingQueue<Message>[] ToDispatch { get { return toDispatch; } }
+        public IEnumerable<Message> Results { get { return results; } }
+        
+        private void Dispatch(IEnumerable<Message> messages, int threadId)
+        {
+            //There is option to use ThreadSafeRandom class but creating separate instance for each thread seams to be 
+            //cleaner solution.
+            var random = new Random(threadId);
+            messages.ToList().ForEach(toDispatch[threadId].Add);
+          
+            while (countdown.CurrentCount > 0)
+            {
+                Message message;
+                if (!toDispatch[threadId].TryTake(out message))
+                    continue;
+                message.IncreaseDispatched();
+                if (message.DestinationThreadId == threadId)
+                {
+                    //It's right message lets add it to result's collection for further analisis                   
+                    results.Add(message);
+                    //decrease global counter
+                    countdown.Signal();
+                    //Console.WriteLine("Found"+threadId+" CountDown"+countdown.CurrentCount);
+                }
+                else
+                {
+                    // that message should be dispatched by other thread lets put it to random bag
+                    var randomThread = random.Next(0, threadsCount);
+                    toDispatch[randomThread].Add(message);
+                }
+            }           
+        }
 
-		public TimeSpan Elapsed
-		{
-			get
-			{
-				countdown.Wait();
-				return stopWatch.Elapsed;
-			}
-		}
+        public TimeSpan Elapsed { get;private set; }
 
         public IEnumerable<string> Histogram
 		{
 			get
 			{
                 countdown.Wait();
-                return from m in dispatched
+                return from m in results
                        group m by m.Despathes
                            into grouped
                            orderby grouped.Key
@@ -60,94 +97,13 @@ namespace Marcel.MessageProcessor
             }
 		}
 
-		public double AllDispatches
-		{
-			get
-			{
-				countdown.Wait();
-				return (from m in dispatched select m.Despathes).Sum();
-			}
-		}
-
 		public double AverageDispatches
 		{
 			get
 			{
 				countdown.Wait();
-				return (from m in dispatched select m.Despathes).Average();
+				return (from m in results select m.Despathes).Average();
 			}
-		}
-
-		public void Start()
-		{
-			stopWatch = new Stopwatch();
-			stopWatch.Start();
-			for (var i = 0; i < threadsCount; i++)
-			{
-				// create local variable to do not access modified closure
-				var temp = i;
-				var worker = new Thread(() => Dispatch(new MessageBuilder(threadsCount, messagesCount,temp).GetMessages(), temp))
-				             	{Name = "MyWorker_" + temp};
-				worker.Start();
-                // I tried to use TaskClass but apparently it was much slower than Thread
-                //Task.Factory.StartNew(()=>Dispatch(new MessageBuilder(threadsCount, messagesCount,temp).GetMessages(), temp));
-			}
-			countdown.Wait();
-			ReleaseAllThreads();
-			stopWatch.Stop();
-		}
-
-		private void ReleaseAllThreads()
-		{
-		
-			for (var i = 0; i < threadsCount; i++)
-			{
-				((MyProducerQueue<Message>)toDispatch[i]).Abort();
-			
-			}
-		}
-
-		private void Dispatch(IEnumerable<Message> messages, int threadId)
-		{
-			//There is option to use ThreadSafeRandom class but creating separate instance for each thread seams to be 
-			//cleaner solution.
-			var random=new Random(threadId);
-			foreach (var message in messages)
-			{
-				toDispatch[threadId].TryAdd(message);
-			}
-			while (countdown.CurrentCount > 0)
-			{
-				Message message;
-				if(!toDispatch[threadId].TryTake(out message))
-					continue;
-
-                message.IncreaseDispatched();
-				if (message.DestinationThreadId == threadId)
-				{
-					//It's right message lets add it to result's collection for further analisis
-					AddToResultsCollection(message);
-//					Console.WriteLine("Found"+threadId+" CountDown"+countdown.CurrentCount);
-				}
-				else
-				{
-					// that message should be dispatched by other thread lets put it to random bag
-					PassToRandomThread(message,random);
-				}
-			}
-		}
-
-		private void AddToResultsCollection(Message message)
-		{
-			dispatched.TryAdd(message);
-			//decrease global counter
-			countdown.Signal();
-		}
-
-		private void PassToRandomThread(Message message,Random random)
-		{
-			var randomThread = random.Next(0, threadsCount);
-            toDispatch[randomThread].TryAdd(message);
 		}
 
 		private void ValidateParameters(int threadsNumber, int messagesNumber)

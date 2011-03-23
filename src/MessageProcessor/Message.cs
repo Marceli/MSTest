@@ -6,11 +6,11 @@ namespace Marcel.MessageProcessor
 {
 	public class Message
 	{
-		private object locker=new object();
-		private int despathes = 0;
+        int despatches = 0;
 
 		public Message(int destinationThreadId)
 		{
+            
 			this.destinationThreadId = destinationThreadId;
 		}
 
@@ -20,7 +20,7 @@ namespace Marcel.MessageProcessor
 		{
 			get
 			{
-        		return despathes;
+                return despatches;
 			}
 		}
 
@@ -34,7 +34,7 @@ namespace Marcel.MessageProcessor
 
 		public void IncreaseDispatched()
 		{
-			Interlocked.Increment(ref this.despathes);
+            Interlocked.Increment(ref despatches);
 		}
 	}
 }

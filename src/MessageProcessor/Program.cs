@@ -15,6 +15,9 @@ namespace Marcel.MessageProcessor
 		static bool finished=false;
 		static MessageProcessor2 messageProcessor;
 		static TextWriterTraceListener textWriterTraceListener;
+        const string fileName = "results.txt";
+
+
 		static void Main(string[] args)
 		{
 			int threadsCount;
@@ -25,14 +28,12 @@ namespace Marcel.MessageProcessor
 //				Console.WriteLine("Usage : messageprocessor.exe 64 256");
 //				return;
 //			}
-			Console.WriteLine(
-				"It's O(T^2*M) (where T number of threads, M number of messages) algoritm so it can take some time to compute results for big T");
+			Console.WriteLine("It's O(T^2*M) (where T number of threads, M number of messages) algorithm so it can take some time to compute results for big T");
+           
 			threadsCount = 64;
 			messagesCount = 256;
 
 			messageProcessor = new MessageProcessor2(threadsCount, messagesCount);
-			//messageProcessor.Start();
-			//return;
 			var backgroundWorker = new BackgroundWorker();
 			backgroundWorker.RunWorkerCompleted+=DisplayResults;
 			backgroundWorker.DoWork+=ProcessMessages;
@@ -42,6 +43,8 @@ namespace Marcel.MessageProcessor
 				Console.Write(".");
 				Thread.Sleep(500);
 			}
+            Debug.Assert(messageProcessor.Results.Count()==threadsCount*messagesCount);
+            Debug.Assert((from m in messageProcessor.ToDispatch select m.Count).Sum() == 0);
 			Console.ReadLine();
 		}
 
@@ -54,13 +57,14 @@ namespace Marcel.MessageProcessor
 		{
 			finished = true;
             SetUpListeners();
-            Trace.WriteLine(messageProcessor.AverageDispatches);
+            Trace.WriteLine(string.Format("{0:0.000}",messageProcessor.AverageDispatches));
             messageProcessor.Histogram.ToList<string>().ForEach(PrintHistogram);
             Trace.WriteLine(string.Format("Run time: {0:00}:{1:00}:{2:00}.{3:000}",
                 messageProcessor.Elapsed.Hours,
                 messageProcessor.Elapsed.Minutes,
                 messageProcessor.Elapsed.Seconds,
                 messageProcessor.Elapsed.Milliseconds));
+            Console.WriteLine("Results are stored in {0} file.", fileName);
             textWriterTraceListener.Close();
 
 		}
@@ -73,7 +77,7 @@ namespace Marcel.MessageProcessor
 		private static void SetUpListeners()
 		{
 			Trace.Listeners.Clear();
-			const string fileName = "log.txt";
+			
 			if(File.Exists(fileName))
 				File.Delete(fileName);
 

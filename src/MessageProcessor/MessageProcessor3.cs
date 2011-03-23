@@ -11,7 +11,7 @@ namespace Marcel.MessageProcessor
 	public class MessageProcessor3
 	{
       
-		private readonly CountdownEvent countdown;
+		private CountdownEvent countdown;
 		private readonly ConcurrentBag<Message> results = new ConcurrentBag<Message>();
 		private readonly int messagesCount;
 		private readonly int threadsCount;
@@ -24,28 +24,75 @@ namespace Marcel.MessageProcessor
 			this.threadsCount = threadsCount;
 			this.messagesCount = messagesCount;
             toDispatch = new BlockingCollection<Message>[threadsCount];
-			countdown = new CountdownEvent(threadsCount*messagesCount);
+			
 			this.threadsCount = threadsCount;
 			for (var i = 0; i < threadsCount; i++)
 			{
 				//No requirement to process messages in specific order hence ConcurrentBag should be fastest option
-				toDispatch[i] = new BlockingCollection<Message>(new ConcurrentBag<Message>());
+				toDispatch[i] = new BlockingCollection<Message>(new ConcurrentQueue<Message>());
 			}
 		}
+        public void Start()
+        {
+            countdown = new CountdownEvent(threadsCount * messagesCount);
+            stopWatch = Stopwatch.StartNew();
+            for (var i = 0; i < threadsCount; i++)
+            {
+                // create local variable to do not access modified closure
+                var temp = i;
+                Task.Factory.StartNew(() => Dispatch(new MessageBuilder(threadsCount, messagesCount, temp).GetMessages(), temp), TaskCreationOptions.LongRunning);
+            }
+            countdown.Wait();
+            for (var i = 0; i < threadsCount; i++)
+            {
+                toDispatch[i].CompleteAdding();
+
+            }
+            Elapsed = stopWatch.Elapsed;
+            AssertAllMessagesDespatched();
+        }
+
+        private void Dispatch(IEnumerable<Message> messages, int threadId)
+        {
+            //There is option to use ThreadSafeRandom class but creating separate instance for each thread seams to be 
+            //cleaner solution.
+            var random = new Random(threadId);
+            foreach (var message in messages)
+            {
+                toDispatch[threadId].Add(message);
+            }
+            while (!toDispatch[threadId].IsCompleted)
+            {
+                foreach (var message in toDispatch[threadId].GetConsumingEnumerable())
+                {
+                    message.IncreaseDispatched();
+
+                    if (message.DestinationThreadId == threadId)
+                    {
+                        //It's right message lets add it to result's collection for further analisis
+                        results.Add(message);
+                        //decrease global counter
+                        countdown.Signal();
+
+                    }
+                    else
+                    {
+                        // that message should be dispatched by other thread lets put it to random bag
+                        //Here could be used BlockingCollection.TryAddToAny but only but maximum 62 elements of array is suported.
+                        var randomThread = random.Next(0, threadsCount);
+                        toDispatch[randomThread].TryAdd(message);
+                    }
+                }
+            }
+        }
+
 
         public BlockingCollection<Message>[] ToDispatch
 		{
 			get { return toDispatch; }
 		}
 
-		public TimeSpan Elapsed
-		{
-			get
-			{
-				countdown.Wait();
-				return stopWatch.Elapsed;
-			}
-		}
+        public TimeSpan Elapsed { get; private set; }
 
 		public IEnumerable<string> Histogram
 		{
@@ -78,63 +125,24 @@ namespace Marcel.MessageProcessor
 			}
 		}
 
-		public void Start()
-		{
-			stopWatch = new Stopwatch();
-			stopWatch.Start();
-            IList<ThreadParam> threadParams=new List<ThreadParam>();
-			for (var i = 0; i < threadsCount; i++)
-			{
-				// create local variable to do not access modified closure
-				var temp = i;
-                var param=new ThreadParam(i, threadsCount, messagesCount);
-                Task.Factory.StartNew(()=>Dispatch(param),TaskCreationOptions.LongRunning);
-			}
-			countdown.Wait();
-			ReleaseAllThreads();
-			stopWatch.Stop();
-		}
+
+         void AssertAllMessagesDespatched()
+        {
+             foreach(var collection in toDispatch)
+            {
+                if(collection.Count!=0)
+                {
+                    Console.WriteLine("Something wrong");
+                }
+            }
+        }
 
 		private void ReleaseAllThreads()
 		{
     		toDispatch.ToList().ForEach(bc=>bc.CompleteAdding());
 		}
 
-		private void Dispatch(object threadParam)
-		{
-			//There is option to use ThreadSafeRandom class but creating separate instance for each thread seams to be 
-			//cleaner solution.
-            var threadId = ((ThreadParam)threadParam).ThreadId;
-            var messages = ((ThreadParam)threadParam).Messages;
-			var random=new Random(threadId);
-			foreach (var message in messages)
-			{
-				toDispatch[threadId].Add(message);
-			}
-            while (!toDispatch[threadId].IsCompleted)
-			{
-                foreach (var message in toDispatch[threadId].GetConsumingEnumerable())
-                {
-                    message.IncreaseDispatched();
-                   
-                    if (message.DestinationThreadId == threadId)
-                    {
-                        //It's right message lets add it to result's collection for further analisis
-                        results.Add(message);
-                        //decrease global counter
-                        countdown.Signal();
 
-                    }
-                    else
-                    {
-                        // that message should be dispatched by other thread lets put it to random bag
-                        //Here could be used BlockingCollection.TryAddToAny but only but maximum 62 elements of array is suported.
-                        var randomThread = random.Next(0, threadsCount);
-                        toDispatch[randomThread].TryAdd(message);
-                    }                                      
-                }
-			}
-		}
         
 		private void ValidateParameters(int threadsNumber, int messagesNumber)
 		{
