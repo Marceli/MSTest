@@ -9,15 +9,19 @@ namespace OnTheRightTrack
 		
 		private readonly IList<Track> connections;
        
-		private readonly string key;
+		private readonly int key;
 		private object data;
 
-		public Node(string key, object data)
-			: this(key, data, null)
-		{
-		}
+		
 
-		public Node(string key, object data, IList<Track> connections)
+        private IDictionary<int,bool> forbidden = new Dictionary<int,bool>();
+        public IDictionary<int, bool> Forbidden { get { return forbidden; } }
+        public Node(int key):this(key,null,null){}
+        public Path<Node> Path { get; set; }
+        public Node(int key, object data): this(key, data, null)
+        {
+        }
+		public Node(int key, object data, IList<Track> connections)
 		{
 			this.key = key;
 			this.data = data;
@@ -30,15 +34,15 @@ namespace OnTheRightTrack
 				this.connections = connections;
 			}
 		}
-
-		
+        public virtual int Len{get;set;}
+       
 		public virtual object Data
 		{
 			get { return data; }
 			set { data = value; }
 		}
 
-		public virtual string Key
+		public virtual int Key
 		{
 			get { return key; }
 		}

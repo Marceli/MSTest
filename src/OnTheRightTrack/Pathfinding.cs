@@ -11,68 +11,89 @@ namespace OnTheRightTrack
 
 		private static Hashtable dist = new Hashtable();
 		private static Hashtable route = new Hashtable();
+        private static IList<Track> forbidden = new List<Track>();
 
-		/// <summary>
-		/// Performs a Breadth Search search
-		/// </summary>
-		/// <param name="start"></param>
-		/// <param name="end"></param>
-		public static void BreadthFirstSearch(Node start, Node end)
-		{
-			var queue = new Queue<Node>();
+        /// <summary>
+        /// Performs a Depth First search
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        public static void MyDepthFirstSearch(Node start, int s)
+        {
+            var stack = new Stack<Node>();
+            var path = new Path<Node>(start);
+            var len = 0;
+            start.Path = path;
+            stack.Push(start);
 
-			queue.Enqueue(start);
+            while (stack.Count != 0)
+            {
+                var u = stack.Pop();
+                len = u.Len;
 
-			while(queue.Count != 0)
-			{
-				var current = queue.Dequeue();
+                // Check if node is the end
+                if (len >= s)
+                {
+                    if (len == s)
+                    {
+                        Console.WriteLine("Path found");
+                    }
+                    else
+                    {
+                        Console.WriteLine("to long");
+                    }
 
-				// Check if node is the end
-				if(current == end)
-				{
-					Console.Write("Path found.");
+                    break;
+                }
+                else
+                {
+                    u.Data = "Visited";
 
-					break;
-				}
-				else
-				{
-					current.Data = "Visited";
+                    // Store n's neighbors in the stack
+                    foreach (Track edge in u.Connections)
+                    {
+                        
+                            //Console.WriteLine("Current step: {0} -> {1} ", u.Key, edge.Neighbor.Key);
+                            if(u.Path.IsMoveBack(u,edge.Neighbor))
+                            {
+                                continue;
+                            }
+                            edge.Neighbor.Data = "Visited";
+                            edge.Neighbor.PathParent = u;
+                           
+                            edge.Neighbor.Path=u.Path.AddStep(edge.Neighbor, edge.Cost);
+                            
 
-					// Expands u's neighbors in the queue
-					foreach(var edge in current.Connections)
-					{
-						if(edge.Neighbor.Data == null)
-						{
-							edge.Neighbor.Data = "Visited";
+                            Console.WriteLine("Current step: {0} -> {1} ", u.Key, edge.Neighbor.Key);
+                            if (edge.Neighbor.Path.TotalCost>=s)
+                            {
+                                if (edge.Neighbor.Path.TotalCost == s)
+                                {
+                                    Console.WriteLine("Path found");
+                                    edge.Neighbor.Path.PrintPath();
 
-							if(edge.Neighbor != end)
-							{
-								edge.Neighbor.PathParent = current;
+                                    
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Too long");
+                                    continue;
+                                }
+                                return;
 
-								PrintPath(edge.Neighbor);
-							}
-							else
-							{
-								edge.Neighbor.PathParent = current;
+                            }
+                            stack.Push(edge.Neighbor);
+                        
+                    }
+                }
+                
+            }
+            Console.WriteLine("Bolo");
+        }
+            
+        
 
-								PrintPath(edge.Neighbor);
 
-								return;
-							}
-
-							Console.WriteLine();
-						}
-						
-                        else
-                        {
-                          Console.Write(edge.Neighbor.Key);
-                        } 
-
-						queue.Enqueue(edge.Neighbor);
-					}
-				}
-			}
-		}
 
 		/// <summary>
 		/// Performs a Depth First search
@@ -136,11 +157,68 @@ namespace OnTheRightTrack
 			}
 		}
 
+        /// <summary>
+        /// Performs a Breadth Search search
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="end"></param>
+        public static void BreadthFirstSearch(Node start, Node end)
+        {
+            var queue = new Queue<Node>();
+
+            queue.Enqueue(start);
+
+            while (queue.Count != 0)
+            {
+                var current = queue.Dequeue();
+
+                // Check if node is the end
+                if (current == end)
+                {
+                    Console.Write("Path found.");
+
+                    break;
+                }
+                else
+                {
+                    current.Data = "Visited";
+
+                    // Expands u's neighbors in the queue
+                    foreach (var edge in current.Connections)
+                    {
+                        if (edge.Neighbor.Data == null)
+                        {
+                            edge.Neighbor.Data = "Visited";
+
+                            edge.Neighbor.PathParent = current;
+
+                            PrintPath(edge.Neighbor);
+
+                            if (edge.Neighbor == end)
+                            {
+                                return;
+                            }
+                            
+
+                            Console.WriteLine();
+                        }
+
+                        else
+                        {
+                            Console.Write(edge.Neighbor.Key);
+                        }
+
+                        queue.Enqueue(edge.Neighbor);
+                    }
+                }
+            }
+        }
+
 		/// <summary>
 		/// Initializes the distance and route tables used for Dijkstra's Algorithm.
 		/// </summary>
 		/// <param name="start">The <b>Key</b> to the source Node.</param>
-		static void InitDistRouteTables(string start)
+		static void InitDistRouteTables(int start)
 		{
 			// set the initial distance and route for each city in the pathFinding.Graph
 			foreach(var n in graph.Nodes)
@@ -178,7 +256,7 @@ namespace OnTheRightTrack
 		/// use a <i>priority queue</i> data structure to store the nodes, rather than an array.  Using a priority queue
 		/// will improve Dijkstra's running time to O(E lg <i>n</i>), where E is the number of edges.  This approach is
 		/// preferred for sparse pathFinding.Graphs.  For more information on this, consult the README included in the download.</remarks>
-		private static Node GetMin(IDictionary<string ,Node> nodes)
+		private static Node GetMin(IDictionary<int ,Node> nodes)
 		{
 			// find the node in nodes with the smallest distance value
 			int minDist = Int32.MaxValue;
@@ -209,7 +287,7 @@ namespace OnTheRightTrack
        
 			InitDistRouteTables(start.Key);		// initialize the route & distance tables
 
-			IDictionary<string,Node> nodes = graph.Nodes;	// nodes == Q
+			IDictionary<int,Node> nodes = graph.Nodes;	// nodes == Q
 
 			/**** START DIJKSTRA ****/
 			while(nodes.Count > 0)
@@ -267,16 +345,15 @@ namespace OnTheRightTrack
 		/// <param name="node"></param>
 		static public void PrintPath(Node node)
 		{
-			if(node.PathParent != null)
-				PrintPath(node.PathParent);
+			
 
-			Console.Write("{0} ", node.Key);
+			Console.WriteLine("Node:{0} NodeLenth:{1} ", node.Key, node.Len);
 		}
 
 		public virtual Graph Graph
 		{
 			get
-			{
+			{ 
 				return graph;
 			}
 			set

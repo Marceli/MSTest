@@ -6,15 +6,15 @@ namespace OnTheRightTrack
 	public class Graph
 	{
 		// Fields
-		private readonly IDictionary<string, Node> nodes;
+		private readonly IDictionary<int, Node> nodes;
 
 		// Methods
 		public Graph()
 		{
-			nodes = new Dictionary<string, Node>();
+			nodes = new Dictionary<int, Node>();
 		}
 
-		public Graph(IDictionary<string, Node> nodes)
+		public Graph(IDictionary<int, Node> nodes)
 		{
 			this.nodes = nodes;
 		}
@@ -24,7 +24,7 @@ namespace OnTheRightTrack
 			get { return nodes.Count; }
 		}
 
-		public virtual IDictionary<string, Node> Nodes
+		public virtual IDictionary<int, Node> Nodes
 		{
 			get { return nodes; }
 		}
@@ -38,7 +38,7 @@ namespace OnTheRightTrack
 			nodes.Add(n.Key, n);
 		}
 
-		public virtual Node AddNode(string key, object data)
+		public virtual Node AddNode(int key, object data)
 		{
 			if (nodes.ContainsKey(key))
 			{
@@ -54,7 +54,7 @@ namespace OnTheRightTrack
 			AddUndirectedEdge(u, v, 0);
 		}
 
-		public virtual void AddUndirectedEdge(string uKey, string vKey)
+		public virtual void AddUndirectedEdge(int uKey, int vKey)
 		{
 			AddUndirectedEdge(uKey, vKey, 0);
 		}
@@ -69,7 +69,7 @@ namespace OnTheRightTrack
 			v.AddDirected(u, cost);
 		}
 
-		public virtual void AddUndirectedEdge(string uKey, string vKey, int cost)
+		public virtual void AddUndirectedEdge(int uKey, int vKey, int cost)
 		{
 			if (!nodes.ContainsKey(uKey) || !nodes.ContainsKey(vKey))
 			{
@@ -88,7 +88,7 @@ namespace OnTheRightTrack
 			return Contains(n.Key);
 		}
 
-		public virtual bool Contains(string key)
+		public virtual bool Contains(int key)
 		{
 			return nodes.ContainsKey(key);
 		}

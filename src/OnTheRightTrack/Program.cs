@@ -20,19 +20,19 @@ namespace OnTheRightTrack
             //adding Vertexes
             for (var i = 1; i <= values[0]; i++)
             {
-                pathFinding.Graph.AddNode(i.ToString(), null);
+                pathFinding.Graph.AddNode(i, null);
             }
             //adding Edges
 			while ((input=streamReader.ReadLine())!=null)
 			{
                 
 				var trackData = parseLine(input);
-                pathFinding.Graph.AddUndirectedEdge(trackData[0].ToString(), trackData[1].ToString(), trackData[2]);
+                pathFinding.Graph.AddUndirectedEdge(trackData[0], trackData[1], trackData[2]);
 			}
-            var start = pathFinding.Graph.Nodes["1"];
-            var end = pathFinding.Graph.Nodes["3"];
+            var start = pathFinding.Graph.Nodes[1];
+            var end = pathFinding.Graph.Nodes[3];
             var stopwatch=Stopwatch.StartNew();
-            Pathfinding.DepthFirstSearch(start, end);
+            Pathfinding.MyDepthFirstSearch(start, 1000);
             Console.WriteLine();
             Console.WriteLine("Run time:"+stopwatch.ElapsedMilliseconds);
 			Console.ReadKey();
