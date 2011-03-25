@@ -5,10 +5,10 @@ namespace OnTheRightTrack
 {
 	public class Graph
 	{
-		// Fields
+		
 		private readonly IDictionary<int, Node> nodes;
 
-		// Methods
+		
 		public Graph()
 		{
 			nodes = new Dictionary<int, Node>();

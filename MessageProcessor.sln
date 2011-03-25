@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Web Developer Express 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessageProcessor", "src\MessageProcessor\MessageProcessor.csproj", "{31722516-13D3-49BC-B077-5CD69B875289}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BreadthDepthFirstSearch", "src\OnTheRightTrack\BreadthDepthFirstSearch.csproj", "{BB81DB6C-1C55-435A-98C6-F9E74AF04D6F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OnTheRightTrack", "src\OnTheRightTrack\OnTheRightTrack.csproj", "{BB81DB6C-1C55-435A-98C6-F9E74AF04D6F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -6,7 +6,7 @@ using System.Collections;
 
 namespace OnTheRightTrack
 {
-    public class Path<T> : IEnumerable<T> where T : class
+    public class Path<T> : IEnumerable<T> where T : class,INode
     {
         public T LastStep { get; private set; }
         public Path<T> PreviousSteps { get; private set; }
@@ -43,15 +43,33 @@ namespace OnTheRightTrack
             }
             return false;
         }
+
+        public bool IsCycle(T to,out T from)
+        {
+            from = null;
+            foreach (var node in this)
+            {
+                if(node.Key==to.Key)
+                {
+                    from =node;
+                    return true;
+                }
+                
+            }
+            return false;
+            
+        }
         public string GetPath()
         {
             StringBuilder sb = new StringBuilder();
             foreach(var node in this.Reverse())
             {
-                sb.AppendFormat("{0} -> ", node);
+                sb.AppendFormat("{0}({1}) -> ", node.Key,node.Path.TotalCost);
             }
             return sb.ToString(0, sb.Length - 3);
 
         }
+
+        
     }
 }

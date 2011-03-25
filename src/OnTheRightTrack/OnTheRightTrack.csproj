@@ -8,8 +8,8 @@
     <ProjectGuid>{BB81DB6C-1C55-435A-98C6-F9E74AF04D6F}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>BreadthDepthFirstSearch</RootNamespace>
-    <AssemblyName>BreadthDepthFirstSearch</AssemblyName>
+    <RootNamespace>OnTheRightTrack</RootNamespace>
+    <AssemblyName>ontrack</AssemblyName>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <OldToolsVersion>3.5</OldToolsVersion>
@@ -62,6 +62,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="INode.cs" />
     <Compile Include="Path.cs" />
     <Compile Include="Pathfinding.cs" />
     <Compile Include="Program.cs" />
@@ -88,7 +89,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="input.txt" />
+    <Content Include="input.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
