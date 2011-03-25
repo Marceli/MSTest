@@ -67,12 +67,10 @@ namespace OnTheRightTrack
                             Console.WriteLine("Current step: {0} -> {1} ", u.Key, edge.Neighbor.Key);
                             if (edge.Neighbor.Path.TotalCost>=s)
                             {
+                                Console.WriteLine(edge.Neighbor.Path.GetPath());
                                 if (edge.Neighbor.Path.TotalCost == s)
                                 {
                                     Console.WriteLine("Path found");
-                                    edge.Neighbor.Path.PrintPath();
-
-                                    
                                 }
                                 else
                                 {

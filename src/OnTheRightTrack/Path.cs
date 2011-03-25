@@ -43,5 +43,15 @@ namespace OnTheRightTrack
             }
             return false;
         }
+        public string GetPath()
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach(var node in this.Reverse())
+            {
+                sb.AppendFormat("{0} -> ", node);
+            }
+            return sb.ToString(0, sb.Length - 3);
+
+        }
     }
 }
