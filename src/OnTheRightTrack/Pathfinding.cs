@@ -53,7 +53,7 @@ namespace OnTheRightTrack
                             int cycleLen = edge.Neighbor.Path.TotalCost - from.Path.TotalCost;
                             if (s % cycleLen == from.Path.TotalCost)
                             {
-                                Console.WriteLine(pathLine + "Success!!!");
+                                //Console.WriteLine(pathLine + "Success!!!");
                                 return true;
 
                             }

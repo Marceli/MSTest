@@ -9,66 +9,94 @@ using Marcel.MessageProcessor;
 
 namespace MessageProcessor
 {
-	public class BlockingQueue<T>
-	{
-		readonly object locker = new object();
-		Queue<T> queue = new Queue<T>();
-		private bool completed;
+    public class BlockingQueue<T>
+    {
 
-		public void CompleteAdding()
+        Queue<T> queue = new Queue<T>();
+        private bool completed;
+        bool lockTaken = false;
+        SpinLock _spinLock = new SpinLock();
+        SpinWait sw = new SpinWait();
+        public void CompleteAdding()
         {
-            
-			lock (locker)
-			{
-                this.completed = true;		
-                //release lock
-				Monitor.Pulse(locker);
-			}
-		}
+            completed = true;
+            if (lockTaken) _spinLock.Exit(false);
+        }
 
-		public void Add(T item)
-		{
-			lock (locker)
-			{
-				queue.Enqueue(item);
-                //notify that we added item
-				Monitor.Pulse(locker);		
-			}			
-		}
+        public void Add(T item)
+        {
+            bool lockTaken = false;
+            try
+            {
+
+                _spinLock.Enter(ref lockTaken);
+                queue.Enqueue(item);
+                sw.Reset();
+            }
+            finally
+            {
+                if (lockTaken) _spinLock.Exit(false);
+
+            }
+
+
+        }
         public int Count
         {
             get
             {
-                lock (locker)
+                try
                 {
-
+                    _spinLock.Enter(ref lockTaken);
                     return queue.Count;
+                }
+                finally
+                {
+                    if (lockTaken) _spinLock.Exit(false);
 
                 }
+
             }
         }
 
-		public bool TryTake(out T item)
-		{
-			lock (locker)
-			{			
+        public bool TryTake(out T item)
+        {
+            
+            try
+            {
+                bool lockTaken = false;
+                _spinLock.Enter(ref lockTaken);
+               
                 while (queue.Count == 0 && !completed)
                 {
-                    // The queue is empty wait for Add and Pulse
-                    //Release the lock on an object and blocks this thread
-                    Monitor.Wait(locker);
-                }    
-				if(!completed)
-					item = queue.Dequeue();
-				else
-				{
-					item = default(T);
-					return false;
-				}
-				return true;
-			}
-		}
+
+                    sw.SpinOnce();
+                    
+
+                }
+                item = queue.Dequeue();
 
 
-	}
+            }
+            finally
+            {
+                if (lockTaken) _spinLock.Exit(false);
+
+            }
+
+            //if (!completed)
+            //    item = queue.Dequeue();
+            //else
+            //{
+            //    item = default(T);
+            //    return false;
+            //}
+            return true;
+
+
+        }
+
+
+    }
 }
+

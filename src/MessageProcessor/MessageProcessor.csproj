@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Copy of BlockingQueue.cs" />
     <Compile Include="MessageProcessor3.cs" />
     <Compile Include="MessageProcessor2.cs" />
     <Compile Include="Message.cs" />
