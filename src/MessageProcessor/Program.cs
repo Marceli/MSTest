@@ -70,7 +70,7 @@ namespace Marcel.MessageProcessor
             watch.Stop();
 		    var histogram = results.GroupBy(m=>m.Despathes).OrderBy(g=>g.Key);
             SetUpListeners();
-		    histogram.Select(g => string.Format("{0}    {1}", g.Key, g.Count())).ToList().ForEach(PrintHistogram);
+		    //histogram.Select(g => string.Format("{0}    {1}", g.Key, g.Count())).ToList().ForEach(PrintHistogram);
             Trace.WriteLine("Maximum despaches is:"+results.GroupBy(m=>m.Despathes).Max(g=>g.Key));
             Trace.WriteLine("Minimum despaches is:"+results.GroupBy(m=>m.Despathes).Min(g=>g.Key));
             Trace.WriteLine(string.Format("Avaerage despaches is:{0:0.000}",results.Average(m=>m.Despathes)));

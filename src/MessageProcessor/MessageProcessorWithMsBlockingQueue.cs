@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,27 +9,37 @@ namespace Marcel.MessageProcessor
 {
 	public class MessageProcessorWithMsBlockingQueue:IMessageProcessor
 	{
-      
 		private CountdownEvent countdown;
 		private readonly ConcurrentBag<Message> results = new ConcurrentBag<Message>();
 		private readonly int messagesCount;
 		private readonly int threadsCount;
-        private readonly BlockingCollection<Message>[] toDispatch;
+        private readonly IList<BlockingCollection<Message>> toDispatch;
 
 		public MessageProcessorWithMsBlockingQueue(int threadsCount, int messagesCount)
 		{
 			ValidateParameters(threadsCount, messagesCount);
 			this.threadsCount = threadsCount;
 			this.messagesCount = messagesCount;
-            toDispatch = new BlockingCollection<Message>[threadsCount];
+            toDispatch = new List<BlockingCollection<Message>>();
 			
 			this.threadsCount = threadsCount;
-			for (var i = 0; i < threadsCount; i++)
-			{
-				//No requirement to process messages in specific order hence ConcurrentBag should be fastest option
-				toDispatch[i] = new BlockingCollection<Message>(new ConcurrentQueue<Message>());
-			}
+            //No requirement to process messages in specific order hence ConcurrentBag should be fastest option
+            Enumerable.Range(0,threadsCount).ToList().ForEach(el=>toDispatch.Add(GetBlockingCollection(GetMessages(el))));
 		}
+        
+		public IEnumerable<Message> GetMessages(int seed)
+		{
+		    var random =new Random(Environment.TickCount + seed);
+		    for (var i = 0; i < messagesCount; i++)
+		    {
+		        yield return new Message(random.Next(0, threadsCount));
+		    }
+		}
+        public BlockingCollection<Message> GetBlockingCollection(IEnumerable<Message> messages )
+        {
+            var col = new ConcurrentBag<Message>(messages);
+            return new BlockingCollection<Message>(col);
+        }
 
 	    public IEnumerable<Message> Results
 	    {
@@ -37,32 +47,21 @@ namespace Marcel.MessageProcessor
             { 
                 Console.WriteLine("Using "+this.GetType().Name);
                 countdown = new CountdownEvent(threadsCount * messagesCount);
-                for (var i = 0; i < threadsCount; i++)
-                {
-                    // create local variable to do not access modified closure
-                    var temp = i;
-                    Task.Factory.StartNew(() => Dispatch(new MessageBuilder(threadsCount, messagesCount, temp).GetMessages(), temp), TaskCreationOptions.LongRunning);
-                }
+                ThreadPool.SetMinThreads(threadsCount, threadsCount);
+                var mytask=Task.Factory.StartNew(() => Parallel.ForEach(Enumerable.Range(0, threadsCount), Dispatch));
                 countdown.Wait();
-                for (var i = 0; i < threadsCount; i++)
-                {
-                    toDispatch[i].CompleteAdding();
-    
-                }
+                toDispatch.ToList().ForEach(c=>c.CompleteAdding());
+                mytask.Wait();
                 return results;
             }
 	    }
 
 
-	    private void Dispatch(IEnumerable<Message> messages, int threadId)
+	    private void Dispatch(int threadId)
         {
             //There is option to use ThreadSafeRandom class but creating separate instance for each thread seams to be 
             //cleaner solution.
             var random = new Random(threadId);
-            foreach (var message in messages)
-            {
-                toDispatch[threadId].Add(message);
-            }
             while (!toDispatch[threadId].IsCompleted)
             {
                 foreach (var message in toDispatch[threadId].GetConsumingEnumerable())
@@ -75,7 +74,6 @@ namespace Marcel.MessageProcessor
                         results.Add(message);
                         //decrease global counter
                         countdown.Signal();
-
                     }
                     else
                     {
@@ -88,7 +86,6 @@ namespace Marcel.MessageProcessor
             }
         }
 
-
 	    public void ValidateParameters(int threadsNumber, int messagesNumber)
 		{
 			if (threadsNumber < 1 || threadsNumber > 1000)
@@ -96,25 +93,5 @@ namespace Marcel.MessageProcessor
 			if (messagesNumber < 1 || messagesNumber > 1000)
                 throw new ArgumentOutOfRangeException("Number of messages must be beetween 1 and 1000", "messagesNumber");
 		}
-
 	}
-    public class ThreadParam
-    {
-        int threadId;
-        IEnumerable<Message> messages;
-        public ThreadParam(int threadId,int threadsCount,int messagesCount)
-        {
-            this.threadId = threadId;
-            messages=new MessageBuilder(threadsCount,messagesCount,threadId).GetMessages();
-        }
-        public IEnumerable<Message> Messages { get { return messages; } }
-        public int ThreadId
-        {
-            get
-            { 
-                return threadId; 
-            }
-        }
-    }
-   
 }
