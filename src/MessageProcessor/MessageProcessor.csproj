@@ -42,12 +42,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Copy of BlockingQueue.cs" />
-    <Compile Include="MessageProcessor3.cs" />
-    <Compile Include="MessageProcessor2.cs" />
+    <Compile Include="IMessageProcessor.cs" />
+    <Compile Include="MessageProcessorWithParallel.cs" />
+    <Compile Include="Package.cs" />
+    <Compile Include="MessageProcessorWithMsBlockingQueue.cs" />
+    <Compile Include="MessageProcessorWithCustomBlockingQueue.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="MessageBuilder.cs" />
-    <Compile Include="BlockingQueue.cs" />
+    <Compile Include="CustomBlockingQueue.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

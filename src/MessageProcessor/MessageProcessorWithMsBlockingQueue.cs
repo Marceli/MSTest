@@ -2,13 +2,12 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Marcel.MessageProcessor
 {
-	public class MessageProcessor3
+	public class MessageProcessorWithMsBlockingQueue:IMessageProcessor
 	{
       
 		private CountdownEvent countdown;
@@ -16,9 +15,8 @@ namespace Marcel.MessageProcessor
 		private readonly int messagesCount;
 		private readonly int threadsCount;
         private readonly BlockingCollection<Message>[] toDispatch;
-		private Stopwatch stopWatch;
 
-		public MessageProcessor3(int threadsCount, int messagesCount)
+		public MessageProcessorWithMsBlockingQueue(int threadsCount, int messagesCount)
 		{
 			ValidateParameters(threadsCount, messagesCount);
 			this.threadsCount = threadsCount;
@@ -34,8 +32,8 @@ namespace Marcel.MessageProcessor
 		}
         public void Start()
         {
+            Console.WriteLine("Using "+this.GetType().Name);
             countdown = new CountdownEvent(threadsCount * messagesCount);
-            stopWatch = Stopwatch.StartNew();
             for (var i = 0; i < threadsCount; i++)
             {
                 // create local variable to do not access modified closure
@@ -48,11 +46,18 @@ namespace Marcel.MessageProcessor
                 toDispatch[i].CompleteAdding();
 
             }
-            Elapsed = stopWatch.Elapsed;
-            AssertAllMessagesDespatched();
         }
 
-        private void Dispatch(IEnumerable<Message> messages, int threadId)
+	    public IEnumerable<Message> Results
+	    {
+            get 
+            { 
+                return results;
+            }
+	    }
+
+
+	    private void Dispatch(IEnumerable<Message> messages, int threadId)
         {
             //There is option to use ThreadSafeRandom class but creating separate instance for each thread seams to be 
             //cleaner solution.
@@ -87,64 +92,7 @@ namespace Marcel.MessageProcessor
         }
 
 
-        public BlockingCollection<Message>[] ToDispatch
-		{
-			get { return toDispatch; }
-		}
-
-        public TimeSpan Elapsed { get; private set; }
-
-		public IEnumerable<string> Histogram
-		{
-			get
-			{
-                countdown.Wait();
-                return from m in results
-                       group m by m.Despathes
-                           into grouped
-                           orderby grouped.Key
-                           select string.Format("{0}    {1}", grouped.Key, grouped.Count());
-            }
-		}
-
-		public double AllDispatches
-		{
-			get
-			{
-				countdown.Wait();
-				return (from m in results select m.Despathes).Sum();
-			}
-		}
-
-		public double AverageDispatches
-		{
-			get
-			{
-				countdown.Wait();
-				return (from m in results select m.Despathes).Average();
-			}
-		}
-
-
-         void AssertAllMessagesDespatched()
-        {
-             foreach(var collection in toDispatch)
-            {
-                if(collection.Count!=0)
-                {
-                    Console.WriteLine("Something wrong");
-                }
-            }
-        }
-
-		private void ReleaseAllThreads()
-		{
-    		toDispatch.ToList().ForEach(bc=>bc.CompleteAdding());
-		}
-
-
-        
-		private void ValidateParameters(int threadsNumber, int messagesNumber)
+	    public void ValidateParameters(int threadsNumber, int messagesNumber)
 		{
 			if (threadsNumber < 1 || threadsNumber > 1000)
                 throw new ArgumentOutOfRangeException("Number of threads must be beetween 1 and 1000", "threadsNumber");

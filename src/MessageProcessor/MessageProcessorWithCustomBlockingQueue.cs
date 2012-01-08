@@ -1,41 +1,45 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MessageProcessor;
 
 namespace Marcel.MessageProcessor
 {
-	public class MessageProcessor2
+	public class MessageProcessorWithCustomBlockingQueue : IMessageProcessor
 	{
 		private CountdownEvent countdown;
         private readonly ConcurrentBag<Message> results = new ConcurrentBag<Message>();
 		private readonly int messagesCount;
 		private readonly int threadsCount;
-        private readonly BlockingQueue<Message>[] toDispatch;
-		private Stopwatch stopWatch;
+        private readonly CustomBlockingQueue<Message>[] toDispatch;
+	    public IEnumerable<Message> Results
+	    {
+	        get
+	        {
+	            return results;
+	        }
+	    }
 
-		public MessageProcessor2(int threadsCount, int messagesCount)
+		public MessageProcessorWithCustomBlockingQueue(int threadsCount, int messagesCount)
 		{
 			ValidateParameters(threadsCount, messagesCount);
 			this.threadsCount = threadsCount;
 			this.messagesCount = messagesCount;
-            toDispatch = new BlockingQueue<Message>[threadsCount];
+            toDispatch = new CustomBlockingQueue<Message>[threadsCount];
 			
 			this.threadsCount = threadsCount;
 			for (var i = 0; i < threadsCount; i++)
 			{				
-				toDispatch[i] = new BlockingQueue<Message>();
+				toDispatch[i] = new CustomBlockingQueue<Message>();
 			}
 		}
 
         public void Start()
         {
+            Console.WriteLine("Using "+this.GetType().Name);
             countdown = new CountdownEvent(threadsCount * messagesCount);
-            stopWatch = Stopwatch.StartNew();
             for (var i = 0; i < threadsCount; i++)
             {
                 // create local variable to do not access modified closure
@@ -43,14 +47,8 @@ namespace Marcel.MessageProcessor
                 Task.Factory.StartNew(() => Dispatch(new MessageBuilder(threadsCount, messagesCount, temp).GetMessages(), temp), TaskCreationOptions.LongRunning);
             }
             countdown.Wait();
-            for (var i = 0; i < threadsCount; i++)
-            {
-                toDispatch[i].CompleteAdding();
-            }
-            Elapsed=stopWatch.Elapsed;        
+            toDispatch.ToList().ForEach(m=>m.CompleteAdding());
         }
-        public BlockingQueue<Message>[] ToDispatch { get { return toDispatch; } }
-        public IEnumerable<Message> Results { get { return results; } }
         
         private void Dispatch(IEnumerable<Message> messages, int threadId)
         {
@@ -71,7 +69,7 @@ namespace Marcel.MessageProcessor
                     results.Add(message);
                     //decrease global counter
                     countdown.Signal();
-                    //Console.WriteLine("Found"+threadId+" CountDown"+countdown.CurrentCount);
+//                    Console.WriteLine("Found"+threadId+" CountDown"+countdown.CurrentCount);
                 }
                 else
                 {
@@ -82,31 +80,10 @@ namespace Marcel.MessageProcessor
             }           
         }
 
-        public TimeSpan Elapsed { get;private set; }
 
-        public IEnumerable<string> Histogram
-		{
-			get
-			{
-                countdown.Wait();
-                return from m in results
-                       group m by m.Despathes
-                           into grouped
-                           orderby grouped.Key
-                           select string.Format("{0}    {1}", grouped.Key, grouped.Count());
-            }
-		}
 
-		public double AverageDispatches
-		{
-			get
-			{
-				countdown.Wait();
-				return (from m in results select m.Despathes).Average();
-			}
-		}
 
-		private void ValidateParameters(int threadsNumber, int messagesNumber)
+	    public void ValidateParameters(int threadsNumber, int messagesNumber)
 		{
 			if (threadsNumber < 1 || threadsNumber > 1000)
 				throw new ArgumentException("Number of threads must be beetween 1 and 1000", "threadsNumber");
