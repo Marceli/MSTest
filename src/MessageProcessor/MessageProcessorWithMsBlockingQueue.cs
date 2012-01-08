@@ -30,28 +30,25 @@ namespace Marcel.MessageProcessor
 				toDispatch[i] = new BlockingCollection<Message>(new ConcurrentQueue<Message>());
 			}
 		}
-        public void Start()
-        {
-            Console.WriteLine("Using "+this.GetType().Name);
-            countdown = new CountdownEvent(threadsCount * messagesCount);
-            for (var i = 0; i < threadsCount; i++)
-            {
-                // create local variable to do not access modified closure
-                var temp = i;
-                Task.Factory.StartNew(() => Dispatch(new MessageBuilder(threadsCount, messagesCount, temp).GetMessages(), temp), TaskCreationOptions.LongRunning);
-            }
-            countdown.Wait();
-            for (var i = 0; i < threadsCount; i++)
-            {
-                toDispatch[i].CompleteAdding();
-
-            }
-        }
 
 	    public IEnumerable<Message> Results
 	    {
             get 
             { 
+                Console.WriteLine("Using "+this.GetType().Name);
+                countdown = new CountdownEvent(threadsCount * messagesCount);
+                for (var i = 0; i < threadsCount; i++)
+                {
+                    // create local variable to do not access modified closure
+                    var temp = i;
+                    Task.Factory.StartNew(() => Dispatch(new MessageBuilder(threadsCount, messagesCount, temp).GetMessages(), temp), TaskCreationOptions.LongRunning);
+                }
+                countdown.Wait();
+                for (var i = 0; i < threadsCount; i++)
+                {
+                    toDispatch[i].CompleteAdding();
+    
+                }
                 return results;
             }
 	    }
@@ -99,6 +96,7 @@ namespace Marcel.MessageProcessor
 			if (messagesNumber < 1 || messagesNumber > 1000)
                 throw new ArgumentOutOfRangeException("Number of messages must be beetween 1 and 1000", "messagesNumber");
 		}
+
 	}
     public class ThreadParam
     {

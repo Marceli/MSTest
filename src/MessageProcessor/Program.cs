@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 
 namespace Marcel.MessageProcessor
@@ -15,10 +17,10 @@ namespace Marcel.MessageProcessor
 		static TextWriterTraceListener textWriterTraceListener;
         const string fileName = "results.txt";
         static Stopwatch watch=new Stopwatch();
-        
+	    private static CountdownEvent myEvent;
 
 
-		static void Main(string[] args)
+	    static void Main(string[] args)
 		{
 			int threadsCount;
 			int messagesCount;
@@ -32,48 +34,46 @@ namespace Marcel.MessageProcessor
            
 			threadsCount = 63;
 			messagesCount = 256;
-            Console.WriteLine("using paralelFor collection");
-            //nice but doesn't handle more than 63 threads how nice is that.
-			Start(messageProcessor = new MessageProcessorWithParallel(threadsCount, messagesCount));
-            Console.WriteLine("using ms blocking collection");
-			Start(messageProcessor = new MessageProcessorWithMsBlockingQueue(threadsCount, messagesCount));
-            Console.WriteLine("using custom collection");
-			Start(messageProcessor = new MessageProcessorWithCustomBlockingQueue(threadsCount, messagesCount));
+            //nice but doesn't handle no more than 63 threads how nice is that?
+			messageProcessor = new MessageProcessorWithParallel(threadsCount, messagesCount);
+            Start();
+			messageProcessor = new MessageProcessorWithMsBlockingQueue(threadsCount, messagesCount);
+            Start();
+			messageProcessor = new MessageProcessorWithCustomBlockingQueue(threadsCount, messagesCount);
+            Start();
 		    Console.ReadKey();
 		}
 
-	    private static void Start(IMessageProcessor processor)
+	    private static void Start()
 	    {
-	        finished = false;
+	        myEvent = new CountdownEvent(1);
             watch.Reset();
-	        var backgroundWorker = new BackgroundWorker();
-	        backgroundWorker.RunWorkerCompleted += DisplayResults;
-	        watch.Start();
-	        var arg = new DoWorkEventArgs(processor);
-	        backgroundWorker.DoWork += ProcessMessages;
-	        backgroundWorker.RunWorkerAsync(arg);
-	        while (!finished)
+	        var t=Task.Factory.StartNew(DisplayResults);
+	        while (!myEvent.IsSet)
 	        {
 	            Console.Write(".");
 	            Thread.Sleep(500);
 	        }
+	        t.Wait();
+
 	    }
 
-	    private static void ProcessMessages(object sender, DoWorkEventArgs e)
-		{
-            var olo=((DoWorkEventArgs)e.Argument);
-	         ((IMessageProcessor) olo.Argument).Start();
-		
-		}
 
-		private static void DisplayResults(object sender, RunWorkerCompletedEventArgs e)
+		private static void DisplayResults()
 		{
+            watch.Reset();
+
+            watch.Start();
+
+		    var results = messageProcessor.Results;
+		    finished = true;
             watch.Stop();
-		    var histogram = messageProcessor.Results.GroupBy(m=>m.Despathes).OrderBy(g=>g.Key);
-			finished = true;
+		    var histogram = results.GroupBy(m=>m.Despathes).OrderBy(g=>g.Key);
             SetUpListeners();
-            Trace.WriteLine(string.Format("{0:0.000}",messageProcessor.Results.Average(m=>m.Despathes)));
-		    //histogram.Select(g => string.Format("{0}    {1}", g.Key, g.Count())).ToList().ForEach(PrintHistogram);
+		    histogram.Select(g => string.Format("{0}    {1}", g.Key, g.Count())).ToList().ForEach(PrintHistogram);
+            Trace.WriteLine("Maximum despaches is:"+results.GroupBy(m=>m.Despathes).Max(g=>g.Key));
+            Trace.WriteLine("Minimum despaches is:"+results.GroupBy(m=>m.Despathes).Min(g=>g.Key));
+            Trace.WriteLine(string.Format("Avaerage despaches is:{0:0.000}",results.Average(m=>m.Despathes)));
             
 
             Trace.WriteLine(string.Format("Run time: {0:00}:{1:00}:{2:00}.{3:000}",
@@ -83,6 +83,7 @@ namespace Marcel.MessageProcessor
                 watch.Elapsed.Milliseconds));
             Console.WriteLine("Results are stored in {0} file.", fileName);
             textWriterTraceListener.Close();
+		    myEvent.Signal();
 
 		}
         private static void PrintHistogram(string line)

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,10 +11,8 @@ namespace Marcel.MessageProcessor
 {
     public class MessageProcessorWithParallel:IMessageProcessor
     {
-      
         private CountdownEvent countdown;
-      
-        private List<Message> results = new List<Message>();
+        private IList<Message> results = new List<Message>();
         private readonly int messagesCount;
         private readonly int threadsCount;
         private readonly IList<Package> toDispatch=new List<Package>();
@@ -23,43 +22,47 @@ namespace Marcel.MessageProcessor
             this.threadsCount = threadsCount;
             this.messagesCount = messagesCount;
             ValidateParameters();
-			
-            for (var i = 0; i < threadsCount; i++)
+        }
+
+
+        public IEnumerable<Message> Results
+        {
+            get
             {
-                //No requirement to process messages in specific order hence ConcurrentBag should be fastest option
-                toDispatch.Add( new Package(){ThreadId = i});
+                Console.WriteLine("Using " + this.GetType().Name);
+                toDispatch.Clear();
+                Enumerable.Range(0, threadsCount).ToList().
+                    ForEach(i => toDispatch.Add(new Package
+                                                    {
+                                                        ThreadId = i,
+                                                        Messages =GetMessagesCollection(i)
+                                                    }));
+                countdown = new CountdownEvent(threadsCount*messagesCount);
+                ThreadPool.SetMinThreads(threadsCount, threadsCount);
+                var myTask =Task<IList<Message>>.Factory.StartNew(() => toDispatch.AsParallel().WithDegreeOfParallelism(threadsCount).SelectMany(ProcessPackage).ToList());
+                countdown.Wait();
+                foreach (var package in toDispatch)
+                {
+                    package.Messages.CompleteAdding();
+                }
+                myTask.Wait();
+                return myTask.Result;
             }
         }
-        public void Start()
-        {
-            Console.WriteLine("Using "+this.GetType().Name);
-            Parallel.ForEach(toDispatch, Populate);
-            countdown = new CountdownEvent(threadsCount * messagesCount);
-            // var taskScheduler = new TaskScheduler().;
-            //var cancellationTokenSource=new CancellationTokenSource();
-           
-            //var options = new ParallelOptions();
-            //options.CancellationToken = cancellationTokenSource.Token;
-            var backgroundWorker = new BackgroundWorker();
-            backgroundWorker.DoWork+=new DoWorkEventHandler(backgroundWorker_DoWork);
-            backgroundWorker.RunWorkerAsync();
-            countdown.Wait();
-          
-            for (var i = 0; i < threadsCount; i++)
-            {
-                toDispatch[i].Messages.CompleteAdding();
 
-            }
-        }
+		public BlockingCollection<Message> GetMessagesCollection(int seed)
+		{
+		    var collection =new ConcurrentBag<Message>();
+		    var random =new Random(Environment.TickCount + seed);
+		    for (var i = 0; i < messagesCount; i++)
+		    {
+		        collection.Add(new Message(random.Next(0, threadsCount)));
+		    }
+            return new BlockingCollection<Message>(collection);
 
-        private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            ThreadPool.SetMinThreads(threadsCount, threadsCount);
-            toDispatch.AsParallel().ForAll(Populate);
-            results=toDispatch.AsParallel().WithDegreeOfParallelism(threadsCount).SelectMany(p => GetResults(p)).ToList();
-        }
+		}
 
-        private IEnumerable<Message> GetResults(Package package)
+        private IEnumerable<Message> ProcessPackage(Package package)
         {
             var random = new Random(package.ThreadId);
             while (countdown.CurrentCount > 0)
@@ -67,35 +70,19 @@ namespace Marcel.MessageProcessor
                 foreach (var message in package.Messages.GetConsumingEnumerable())
                 {
                     message.IncreaseDispatched();
-
                     if (message.DestinationThreadId == package.ThreadId)
                     {
-                        yield return message;
                         countdown.Signal();
+                        yield return message;
                     }
                     else
                     {
-                        var randomThread = random.Next(0, threadsCount);
-                        toDispatch[randomThread].Messages.TryAdd(message);
+                        toDispatch[random.Next(0, threadsCount)].Messages.TryAdd(message);
                     }
                 }
-                yield break;
             }
         }
 
-        private void Populate(Package package)
-        {
-            var messages = new MessageBuilder(threadsCount, messagesCount, package.ThreadId).GetMessages();
-            package.Messages=new BlockingCollection<Message>(new ConcurrentBag<Message>(messages));
-        }
-
-        public IEnumerable<Message> Results
-        {
-            get
-            {
-                return results;
-            }
-        }
 
 
         public void ValidateParameters()
@@ -105,5 +92,7 @@ namespace Marcel.MessageProcessor
             if (messagesCount < 1 || messagesCount > 1000)
                 throw new ArgumentOutOfRangeException("Number of messages must be beetween 1 and 1000", "messagesNumber");
         }
+
+    
     }
 }

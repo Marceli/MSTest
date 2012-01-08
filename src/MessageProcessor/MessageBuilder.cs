@@ -20,12 +20,10 @@ namespace Marcel.MessageProcessor
 
 		public IEnumerable<Message> GetMessages()
 		{
-			var result = new List<Message>();
 			for (var i = 0; i < messagesNumber; i++)
 			{
-				result.Add(new Message(random.Next(0, threadsNumber)));
+				yield return new Message(random.Next(0, threadsNumber));
 			}
-			return result;
 		}
 	}
 }
