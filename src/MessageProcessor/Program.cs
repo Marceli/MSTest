@@ -36,8 +36,8 @@ namespace Marcel.MessageProcessor
             //nice but doesn't handle no more than 63 threads how nice is that?
 //			messageProcessor = new MessageProcessorWithParallel(threadsCount, messagesCount);
 //            Start();
-			messageProcessor = new MessageProcessorWithMsBlockingQueue(threadsCount, messagesCount);
-            Start();
+		//	messageProcessor = new MessageProcessorWithMsBlockingQueue(threadsCount, messagesCount);
+         //   Start();
 			messageProcessor = new MessageProcessorFastest(threadsCount, messagesCount);
             Start();
 		    Console.ReadKey();
