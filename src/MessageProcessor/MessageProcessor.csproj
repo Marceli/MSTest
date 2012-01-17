@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MessageProcessorFastest.cs" />
     <Compile Include="IMessageProcessor.cs" />
     <Compile Include="MessageProcessorWithParallel.cs" />
     <Compile Include="Package.cs" />

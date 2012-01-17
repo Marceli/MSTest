@@ -6,4 +6,4 @@ _ReSharper.*
 *.suo
 */*/bin
 */*/obj
-
+*.psees
